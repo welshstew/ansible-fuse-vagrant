@@ -14,6 +14,10 @@
 
 Set up the intended host topology by modifying the Vagrantfile
 
+### Development
+
+If you want to iterate on Ansible roles to adjust install automation, or add additional automation, run `vagrant provision` to re-run Ansible without having the `vagrant destroy` and create the VMs over again.
+
 ### Issues and Roadmap
 
 - Ansible role implementation is too rigid, move hard-coded values to variables 

@@ -23,4 +23,12 @@ If you want to iterate on Ansible roles to adjust install automation, or add add
 - Ansible role implementation is too rigid, move hard-coded values to variables 
 - Problems getting RMI services to bind, causing failures to ensemble
 
+## Params
 
+zipfile = jboss-fuse-full-6.3.0.redhat-077.zip
+folder = jboss-fuse-6.3.0.redhat-077
+
+
+## Issues...
+
+https://developer.jboss.org/thread/236877

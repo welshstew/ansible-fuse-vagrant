@@ -20,16 +20,21 @@
 
 #- fail: msg="Destroyed"
 
+- name: "Build hosts file"
+  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{item}}" state=present
+  when: hostvars[item].ansible_default_ipv4.address is defined
+  with_items: groups['all']
+
 - name: copy the fuse archive
-  copy: src=jboss-fuse-full-6.2.1.redhat-084.zip dest=/opt/jboss
+  copy: src=jboss-fuse-full-6.3.0.redhat-077.zip dest=/opt/jboss
   register: archive
 
 - name: unarchive fuse
-  unarchive: src=/opt/jboss/jboss-fuse-full-6.2.1.redhat-084.zip dest=/opt/jboss/ owner=jboss group=jboss copy=no
+  unarchive: src=/opt/jboss/jboss-fuse-full-6.3.0.redhat-077.zip dest=/opt/jboss/ owner=jboss group=jboss copy=no
   when: archive.changed
 
 - name: add fuse admin user
-  lineinfile: dest=/opt/jboss/jboss-fuse-6.2.1.redhat-084/etc/users.properties
+  lineinfile: dest=/opt/jboss/jboss-fuse-6.3.0.redhat-077/etc/users.properties
     regexp='^admin=admin'
     insertafter='^#admin=admin'
     line='admin=admin,admin,manager,viewer,Monitor, Operator, Maintainer, Deployer, Auditor, Administrator, SuperUser'
@@ -37,7 +42,7 @@
   when: archive.changed
 
 - name: start fuse
-  shell: ./start chdir=/opt/jboss/jboss-fuse-6.2.1.redhat-084/bin
+  shell: ./start chdir=/opt/jboss/jboss-fuse-6.3.0.redhat-077/bin
   become: yes
   become_user: jboss
   async: 60
@@ -49,23 +54,23 @@
   when: archive.changed
 
 - name: detect fuse service
-  stat: path=/opt/jboss/jboss-fuse-6.2.1.redhat-084/bin/fuse-service
+  stat: path=/opt/jboss/jboss-fuse-6.3.0.redhat-077/bin/fuse-service
   register: service_path
 
 - name: install service wrapper feature
-  command: /opt/jboss/jboss-fuse-6.2.1.redhat-084/bin/client -r 3 -d 10 -u admin -p admin 'features:install wrapper'
+  command: /opt/jboss/jboss-fuse-6.3.0.redhat-077/bin/client -r 3 -d 10 -u admin -p admin 'features:install wrapper'
   become: yes
   become_user: jboss
   when: service_path.stat.exists == False
 
 - name: generate service wrapper
-  command: /opt/jboss/jboss-fuse-6.2.1.redhat-084/bin/client -r 3 -d 10 -u admin -p admin 'wrapper:install -n fuse'
+  command: /opt/jboss/jboss-fuse-6.3.0.redhat-077/bin/client -r 3 -d 10 -u admin -p admin 'wrapper:install -n fuse'
   become: yes
   become_user: jboss
   when: service_path.stat.exists == False
 
 - name: stop fuse
-  shell: ./stop chdir=/opt/jboss/jboss-fuse-6.2.1.redhat-084/bin
+  shell: ./stop chdir=/opt/jboss/jboss-fuse-6.3.0.redhat-077/bin
   become: yes
   become_user: jboss
   async: 60
@@ -73,14 +78,14 @@
   when: archive.changed
 
 - name: configure fuse service
-  lineinfile: dest=/opt/jboss/jboss-fuse-6.2.1.redhat-084/etc/fuse-wrapper.conf
+  lineinfile: dest=/opt/jboss/jboss-fuse-6.3.0.redhat-077/etc/fuse-wrapper.conf
     regexp='^wrapper.java.command='
     line='wrapper.java.command=java'
     state=present
   when: service_path.stat.exists == False
 
 - name: symlink to the fuse service
-  file: src=/opt/jboss/jboss-fuse-6.2.1.redhat-084/bin/fuse-service dest=/etc/init.d/fuse-service state=link
+  file: src=/opt/jboss/jboss-fuse-6.3.0.redhat-077/bin/fuse-service dest=/etc/init.d/fuse-service state=link
   when: service_path.stat.exists == False
 
 - name: enable fuse service
@@ -89,6 +94,11 @@
 - name: start fuse
   command: service fuse-service start
 
+- name: create fabric
+  command: /opt/jboss/jboss-fuse-6.3.0.redhat-077/bin/client -r 3 -d 10 -u admin -p admin 'fabric:create'
+  become: yes
+  become_user: jboss
+  when: service_path.stat.exists == False
 
 
 # fabric:create --new-user admin --new-user-password admin --zookeeper-password admin --resolver manualip --manual-ip 100.0.44.101 --wait-for-provisioning
